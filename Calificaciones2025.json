@@ -1,0 +1,521 @@
+{
+  "name": "Calificaciones2025",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Actividad",
+        "formDescription": "Sube tu actividad",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Actividad",
+              "placeholder": "https://cursos.zacatecasocc.tecnm.mx/mod/assign/view.php?id=2987&action=grading"
+            },
+            {
+              "fieldLabel": "wstoken",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "cmid",
+              "placeholder": "="
+            },
+            {
+              "fieldLabel": "Calficacion Maxima",
+              "fieldType": "number"
+            },
+            {
+              "fieldLabel": "Calificacion Minima",
+              "fieldType": "number"
+            },
+            {
+              "fieldLabel": "Comentario Calificacion Max"
+            },
+            {
+              "fieldLabel": "Comentario Calificacion Minima"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "81903ade-9cda-4b39-a76d-e5402e40dbde",
+      "name": "form submission Actividad",
+      "webhookId": "71864ab8-67df-4049-aecc-ee406efe5529"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cursos.zacatecasocc.tecnm.mx/webservice/rest/server.php",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "wstoken",
+              "value": "={{ $json.wstoken }}"
+            },
+            {
+              "name": "wsfunction",
+              "value": "=core_course_get_course_module"
+            },
+            {
+              "name": "moodlewsrestformat",
+              "value": "=json"
+            },
+            {
+              "name": "cmid",
+              "value": "={{ $json.cmid }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        640,
+        0
+      ],
+      "id": "9cef452a-75c8-4fe8-b065-1dab3af483ae",
+      "name": "HTTP Request: Obtener assignmentid"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cursos.zacatecasocc.tecnm.mx/webservice/rest/server.php",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "wstoken",
+              "value": "={{ $('form submission Actividad').item.json.wstoken }}"
+            },
+            {
+              "name": "wsfunction",
+              "value": "mod_assign_get_submissions"
+            },
+            {
+              "name": "moodlewsrestformat",
+              "value": "=json"
+            },
+            {
+              "name": "assignmentids[0]",
+              "value": "={{ $('HTTP Request: Obtener assignmentid').item.json.cm.instance }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1024,
+        0
+      ],
+      "id": "acf4cb9a-6f92-431e-824e-7ece65955b4d",
+      "name": "HTTP Request : Obtener entregas"
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\nfor (const item of $input.all()) {\n  const assignments = item.json.assignments;\n\n  for (const assignment of assignments) {\n    const assignmentId = assignment.assignmentid;\n\n    for (const submission of assignment.submissions) {\n      const entregado = submission.status === 'submitted'; // ajusta si el estado es diferente\n      const grade = entregado ? $('Datos de Formulario (Edit Fields)').first().json['Calficacion Maxima'] : 0;\n      const mensaje = grade === 0 ?  $('Datos de Formulario (Edit Fields)').first().json['Comentario Calificacion Minima']: $('Datos de Formulario (Edit Fields)').first().json['Comentario Calificacion Max'];\n\n      results.push({\n        json: {\n          userid: submission.userid,\n          assignmentid: assignmentId,\n          grade: grade,\n          mensaje: mensaje\n        }\n      });\n    }\n  }\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        0
+      ],
+      "id": "694642ed-9491-49bd-8b8d-6640220977e3",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cursos.zacatecasocc.tecnm.mx/webservice/rest/server.php",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "wstoken",
+              "value": "={{ $('form submission Actividad').item.json.wstoken }}"
+            },
+            {
+              "name": "wsfunction",
+              "value": "mod_assign_save_grade"
+            },
+            {
+              "name": "moodlewsrestformat",
+              "value": "=json"
+            },
+            {
+              "name": "assignmentid",
+              "value": "={{ $json.assignmentid }}"
+            },
+            {
+              "name": "userid",
+              "value": "={{ $json.userid }}"
+            },
+            {
+              "name": "grade",
+              "value": "={{ $json.grade }}"
+            },
+            {
+              "name": "plugindata[assignfeedbackcomments_editor][format]",
+              "value": "1"
+            },
+            {
+              "name": "plugindata[assignfeedbackcomments_editor][text]",
+              "value": "={{ $json.mensaje }}"
+            },
+            {
+              "name": "attemptnumber",
+              "value": "-1"
+            },
+            {
+              "name": "addattempt",
+              "value": "0"
+            },
+            {
+              "name": "workflowstate",
+              "value": "graded"
+            },
+            {
+              "name": "applytoall",
+              "value": "0"
+            },
+            {
+              "name": "plugindata[files_filemanager]",
+              "value": "0"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1312,
+        0
+      ],
+      "id": "c2351960-931e-4822-8146-2dd6ec5d12ff",
+      "name": "HTTP Request : guardar calificacion"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0d3469d6-eafd-4bfb-b7f0-a352b2f7e957",
+              "name": "wstoken",
+              "value": "={{ $json.wstoken }}",
+              "type": "string"
+            },
+            {
+              "id": "00bd871a-2992-4c1e-9cc6-f865a9ad037b",
+              "name": "cmid",
+              "value": "={{ $json.cmid }}",
+              "type": "string"
+            },
+            {
+              "id": "a46f5935-c46f-43e3-b05b-42adc6950e16",
+              "name": "Calficacion Maxima",
+              "value": "={{ $json['Calficacion Maxima'] }}",
+              "type": "number"
+            },
+            {
+              "id": "36ceadfe-8222-49aa-8789-6172928aa3e6",
+              "name": "Calificacion Minima",
+              "value": "={{ $json['Calificacion Minima'] }}",
+              "type": "number"
+            },
+            {
+              "id": "add2ecff-f224-46b9-a551-2f3c3436d79d",
+              "name": "Comentario Calificacion Max",
+              "value": "={{ $json['Comentario Calificacion Max'] }}",
+              "type": "string"
+            },
+            {
+              "id": "50aa58af-d0f0-46aa-867e-77fe3ffc8891",
+              "name": "Comentario Calificacion Minima",
+              "value": "={{ $json['Comentario Calificacion Minima'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "cdafea5a-3b83-46c4-8371-b98725475726",
+      "name": "Datos de Formulario (Edit Fields)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c988df52-d53b-49f4-aabd-be786910a4a7",
+              "name": "cm.grade",
+              "value": "={{ $json.cm.grade }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        848,
+        0
+      ],
+      "id": "ee24b2fa-e5f8-44d3-a286-43eb6acecceb",
+      "name": "Dato calificacion Maxima (Edit Fields)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const total = $input.all().length;\n\nreturn [{\n  json: {\n    mensaje: `✅ Proceso ejecutado correctamente`,\n    afectados: total,\n    resumen: `Se calificaron ${total} tareas`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        0
+      ],
+      "id": "86e82b31-2b85-46d0-b97f-ca772251366d",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "html": "<!DOCTYPE html>\n\n<html>\n<head>\n  <meta charset=\"UTF-8\" />\n  <title>My HTML document</title>\n</head>\n<body>\n  <div class=\"container\">\n    <h1>{{ $json.mensaje }}</h1>\n    <h2>{{ $json.afectados }}</h2>\n    <p>{{ $json.resumen }}</p>\n  </div>\n</body>\n</html>\n\n<style>\n.container {\n  background-color: #ffffff;\n  text-align: center;\n  padding: 16px;\n  border-radius: 8px;\n}\n\nh1 {\n  color: #ff6d5a;\n  font-size: 24px;\n  font-weight: bold;\n  padding: 8px;\n}\n\nh2 {\n  color: #909399;\n  font-size: 18px;\n  font-weight: bold;\n  padding: 8px;\n}\n</style>\n\n<script>\nconsole.log(\"Hello World!\");\n</script>"
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1760,
+        -208
+      ],
+      "id": "9710e395-c671-489d-a052-f581c85ffc16",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6105925e-d074-42ad-901b-9528af522d55",
+              "leftValue": "={{ $json.afectados }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1600,
+        0
+      ],
+      "id": "01397bdf-2f8d-4a54-b781-4f80958f3389",
+      "name": "If",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "html": "<!DOCTYPE html>\n\n<html>\n<head>\n  <meta charset=\"UTF-8\" />\n  <title>My HTML document</title>\n</head>\n<body>\n  <div class=\"container\">\n    <h1>{{ $json.mensaje }}</h1>\n    <h2>{{ $json.afectados }}</h2>\n    <p>{{ $json.resumen }}</p>\n  </div>\n</body>\n</html>\n\n<style>\n.container {\n  background-color: #ffffff;\n  text-align: center;\n  padding: 16px;\n  border-radius: 8px;\n}\n\nh1 {\n  color: #ff6d5a;\n  font-size: 24px;\n  font-weight: bold;\n  padding: 8px;\n}\n\nh2 {\n  color: #909399;\n  font-size: 18px;\n  font-weight: bold;\n  padding: 8px;\n}\n</style>\n\n<script>\nconsole.log(\"Hello World!\");\n</script>"
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1888,
+        96
+      ],
+      "id": "6402818f-583b-43e1-b1ab-5015000334f5",
+      "name": "HTML1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    mensaje: `❌ Error al ejecutar el proceso`,\n    afectados: 0,\n    resumen: `No se pudo calificar ninguna tarea`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1744,
+        80
+      ],
+      "id": "4a1cea77-ddbc-4c6c-9f8b-c47bcac67785",
+      "name": "Code in JavaScript False"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "form submission Actividad": {
+      "main": [
+        [
+          {
+            "node": "Datos de Formulario (Edit Fields)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request: Obtener assignmentid": {
+      "main": [
+        [
+          {
+            "node": "Dato calificacion Maxima (Edit Fields)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request : Obtener entregas": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request : guardar calificacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Datos de Formulario (Edit Fields)": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request: Obtener assignmentid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dato calificacion Maxima (Edit Fields)": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request : Obtener entregas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request : guardar calificacion": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in JavaScript False",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript False": {
+      "main": [
+        [
+          {
+            "node": "HTML1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1b87438d-6a1c-45f6-9f51-1cfacecdd2cd",
+  "meta": {
+    "instanceId": "40e9644dab7b8aabe3e45e62aac505f600c5a3e0cabac5bc8f7cb4aa721afcb5"
+  },
+  "id": "fAnaiOs1fmhGgW89",
+  "tags": []
+}
