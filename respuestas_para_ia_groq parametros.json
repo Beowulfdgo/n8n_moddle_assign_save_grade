@@ -1,0 +1,73 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "5045c80e-e1ce-414c-8c2e-53e56d3e809e",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "fd1b16e8-6dd9-477a-ba16-b6c5a9a0041c",
+      "name": "Webhook",
+      "webhookId": "5045c80e-e1ce-414c-8c2e-53e56d3e809e"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.1-8b-instant\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Evalúa pregunta/respuesta. Responde SOLO con JSON: {'correcta':bool,'score':0-{{ $json.query.calificacion }},'feedback':'texto'}\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"P: {{ $json.query.Pregunta }} R:{{ $json.query.Respuesta }} \"\n    }\n  ],\n  \"response_format\": {\n    \"type\": \"json_object\"\n  },\n  \"temperature\": 0.1,\n  \"max_tokens\": 150\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "90ea2c9c-6ebf-4f58-8483-9bb5f89845a4",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fc14c42a-2368-4cfb-9c47-248f1a78ab5a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "40e9644dab7b8aabe3e45e62aac505f600c5a3e0cabac5bc8f7cb4aa721afcb5"
+  },
+  "id": "UlHlEx5P5aurD0UE",
+  "tags": []
+}
