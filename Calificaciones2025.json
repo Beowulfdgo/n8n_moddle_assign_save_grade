@@ -1,5 +1,5 @@
 {
-  "name": "Calificaciones2025",
+  "name": "Moodle Calificacion",
   "nodes": [
     {
       "parameters": {
@@ -14,10 +14,6 @@
             {
               "fieldLabel": "wstoken",
               "requiredField": true
-            },
-            {
-              "fieldLabel": "cmid",
-              "placeholder": "="
             },
             {
               "fieldLabel": "Calficacion Maxima",
@@ -40,10 +36,10 @@
       "type": "n8n-nodes-base.formTrigger",
       "typeVersion": 2.3,
       "position": [
-        208,
-        0
+        -1632,
+        208
       ],
-      "id": "81903ade-9cda-4b39-a76d-e5402e40dbde",
+      "id": "b1e1a92d-3205-447f-b5b3-1fc7fcd977e0",
       "name": "form submission Actividad",
       "webhookId": "71864ab8-67df-4049-aecc-ee406efe5529"
     },
@@ -84,10 +80,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        640,
-        0
+        -1120,
+        208
       ],
-      "id": "9cef452a-75c8-4fe8-b065-1dab3af483ae",
+      "id": "693b6790-ad1b-4230-9bb3-d7c98abf4f45",
       "name": "HTTP Request: Obtener assignmentid"
     },
     {
@@ -127,23 +123,23 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1024,
-        0
+        -736,
+        208
       ],
-      "id": "acf4cb9a-6f92-431e-824e-7ece65955b4d",
+      "id": "cca948d3-1eeb-4205-8746-82243bc685f4",
       "name": "HTTP Request : Obtener entregas"
     },
     {
       "parameters": {
-        "jsCode": "const results = [];\n\nfor (const item of $input.all()) {\n  const assignments = item.json.assignments;\n\n  for (const assignment of assignments) {\n    const assignmentId = assignment.assignmentid;\n\n    for (const submission of assignment.submissions) {\n      const entregado = submission.status === 'submitted'; // ajusta si el estado es diferente\n      const grade = entregado ? $('Datos de Formulario (Edit Fields)').first().json['Calficacion Maxima'] : 0;\n      const mensaje = grade === 0 ?  $('Datos de Formulario (Edit Fields)').first().json['Comentario Calificacion Minima']: $('Datos de Formulario (Edit Fields)').first().json['Comentario Calificacion Max'];\n\n      results.push({\n        json: {\n          userid: submission.userid,\n          assignmentid: assignmentId,\n          grade: grade,\n          mensaje: mensaje\n        }\n      });\n    }\n  }\n}\n\nreturn results;\n"
+        "jsCode": "const results = [];\nconst calificacionMaxForm = $('Datos de Formulario (Edit Fields)').first().json['Calficacion Maxima'];\nconst calificacionMinForm = $('Datos de Formulario (Edit Fields)').first().json['Calificacion Minima'];\n\n// Si en el formulario pones Max=1 y Min=0, entonces es escala Yes/No\nconst esEscalaYesNo = (calificacionMaxForm === 1 && calificacionMinForm === 0);\n\nfor (const item of $input.all()) {\n  const assignments = item.json.assignments;\n\n  for (const assignment of assignments) {\n    const assignmentId = assignment.assignmentid;\n\n    for (const submission of assignment.submissions) {\n      const entregado = submission.status === 'submitted';\n      let grade;\n      let mensaje;\n      \n      if (esEscalaYesNo) {\n        // Para escala Yes/No:\n        grade = entregado ? 2 : 1; // 2=Yes, 1=No\n        mensaje = entregado ? \n          $('Datos de Formulario (Edit Fields)').first().json['Comentario Calificacion Max'] : \n          $('Datos de Formulario (Edit Fields)').first().json['Comentario Calificacion Minima'];\n      } else {\n        // Calificación numérica normal\n        grade = entregado ? calificacionMaxForm : calificacionMinForm;\n        mensaje = entregado ? \n          $('Datos de Formulario (Edit Fields)').first().json['Comentario Calificacion Max'] : \n          $('Datos de Formulario (Edit Fields)').first().json['Comentario Calificacion Minima'];\n      }\n\n      results.push({\n        json: {\n          userid: submission.userid,\n          assignmentid: assignmentId,\n          grade: grade,\n          mensaje: mensaje,\n          entregado: entregado  // ⭐ IMPORTANTE: Agregar este campo\n        }\n      });\n    }\n  }\n}\n\nreturn results;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1152,
-        0
+        -608,
+        208
       ],
-      "id": "694642ed-9491-49bd-8b8d-6640220977e3",
+      "id": "c59dfe55-a006-4a16-a9f8-2cf0621ccb66",
       "name": "Code in JavaScript"
     },
     {
@@ -188,11 +184,11 @@
             },
             {
               "name": "attemptnumber",
-              "value": "-1"
+              "value": "=-1"
             },
             {
               "name": "addattempt",
-              "value": "0"
+              "value": "=0"
             },
             {
               "name": "workflowstate",
@@ -219,10 +215,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1312,
-        0
+        -448,
+        208
       ],
-      "id": "c2351960-931e-4822-8146-2dd6ec5d12ff",
+      "id": "24118455-c6b2-46d2-8e3e-80b921af9a51",
       "name": "HTTP Request : guardar calificacion"
     },
     {
@@ -272,10 +268,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        416,
-        0
+        -1280,
+        208
       ],
-      "id": "cdafea5a-3b83-46c4-8371-b98725475726",
+      "id": "a3f58ed0-9d79-49c0-9354-7db21e40919f",
       "name": "Datos de Formulario (Edit Fields)"
     },
     {
@@ -295,10 +291,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        848,
-        0
+        -912,
+        208
       ],
-      "id": "ee24b2fa-e5f8-44d3-a286-43eb6acecceb",
+      "id": "c2681092-2d2d-4ed5-8681-4138f9cbed3e",
       "name": "Dato calificacion Maxima (Edit Fields)"
     },
     {
@@ -308,10 +304,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1456,
-        0
+        -304,
+        208
       ],
-      "id": "86e82b31-2b85-46d0-b97f-ca772251366d",
+      "id": "3e051d13-495f-4f5b-8f61-a17748d78e95",
       "name": "Code in JavaScript1"
     },
     {
@@ -321,10 +317,10 @@
       "type": "n8n-nodes-base.html",
       "typeVersion": 1.2,
       "position": [
-        1760,
-        -208
+        0,
+        0
       ],
-      "id": "9710e395-c671-489d-a052-f581c85ffc16",
+      "id": "3b66dce0-d738-418e-b270-42c64b25057e",
       "name": "HTML"
     },
     {
@@ -354,10 +350,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1600,
-        0
+        -160,
+        208
       ],
-      "id": "01397bdf-2f8d-4a54-b781-4f80958f3389",
+      "id": "183ef30e-e912-4b21-97b7-38c1552d251e",
       "name": "If",
       "alwaysOutputData": false
     },
@@ -368,10 +364,10 @@
       "type": "n8n-nodes-base.html",
       "typeVersion": 1.2,
       "position": [
-        1888,
-        96
+        128,
+        304
       ],
-      "id": "6402818f-583b-43e1-b1ab-5015000334f5",
+      "id": "841f73ef-8e00-4a7b-8f48-2cd61aaeffdc",
       "name": "HTML1"
     },
     {
@@ -381,11 +377,24 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1744,
-        80
+        -16,
+        288
       ],
-      "id": "4a1cea77-ddbc-4c6c-9f8b-c47bcac67785",
+      "id": "ea37644d-91ef-492c-b740-fdbfbd45fe50",
       "name": "Code in JavaScript False"
+    },
+    {
+      "parameters": {
+        "jsCode": "const formData = $input.first().json;\n\n// Extraer cmid de la URL del campo \"Actividad\"\nlet cmid = formData.cmid || '';\n\nif (formData.Actividad) {\n  const match = formData.Actividad.match(/[?&]id=(\\d+)/);\n  if (match && match[1]) {\n    cmid = match[1];\n  }\n}\n\n// Retornar todos los datos del formulario con el cmid extraído\nreturn [{\n  json: {\n    Actividad: formData.Actividad,\n    wstoken: formData.wstoken,\n    cmid: cmid,\n    'Calficacion Maxima': formData['Calficacion Maxima'],\n    'Calificacion Minima': formData['Calificacion Minima'],\n    'Comentario Calificacion Max': formData['Comentario Calificacion Max'],\n    'Comentario Calificacion Minima': formData['Comentario Calificacion Minima']\n  }\n}];\n\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1456,
+        208
+      ],
+      "id": "713f3a32-cc5a-4106-be63-8c584f485317",
+      "name": "Code in JavaScript2"
     }
   ],
   "pinData": {},
@@ -394,7 +403,7 @@
       "main": [
         [
           {
-            "node": "Datos de Formulario (Edit Fields)",
+            "node": "Code in JavaScript2",
             "type": "main",
             "index": 0
           }
@@ -506,16 +515,27 @@
           }
         ]
       ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Datos de Formulario (Edit Fields)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "1b87438d-6a1c-45f6-9f51-1cfacecdd2cd",
+  "versionId": "cf935475-8c47-4fc8-ac9a-872bba51e008",
   "meta": {
-    "instanceId": "40e9644dab7b8aabe3e45e62aac505f600c5a3e0cabac5bc8f7cb4aa721afcb5"
+    "instanceId": "64f5bf0301c3051105f2e36ac3e2c040088ba838c2d3c251a41ebcd8b9347509"
   },
-  "id": "fAnaiOs1fmhGgW89",
+  "id": "zr8H7zMhbxD3ddtY",
   "tags": []
 }
